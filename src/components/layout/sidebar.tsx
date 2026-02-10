@@ -4,7 +4,21 @@ import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-context"
-import { LogOut, Menu, X, Building2, LayoutDashboard, FileText, Settings, Users, File, User, CreditCard, DollarSign } from "lucide-react"
+import {
+  LogOut,
+  Menu,
+  X,
+  Building2,
+  LayoutDashboard,
+  FileText,
+  Settings,
+  Users,
+  File,
+  User,
+  CreditCard,
+  DollarSign,
+  House
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Navigation items for each role
@@ -13,7 +27,7 @@ const navigationByRole = {
     {
       name: "Home",
       href: "/",
-      icon: LayoutDashboard,
+      icon: House,
     },
     {
       name: "Dashboard",
@@ -40,7 +54,7 @@ const navigationByRole = {
     {
       name: "Home",
       href: "/",
-      icon: LayoutDashboard,
+      icon: House,
     },
     {
       name: "Dashboard",
@@ -72,7 +86,7 @@ const navigationByRole = {
     {
       name: "Home",
       href: "/",
-      icon: LayoutDashboard,
+      icon: House,
     },
     {
       name: "Dashboard",
