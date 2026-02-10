@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, LogOut, Menu, X, Download } from "lucide-react"
 import { useAuth } from "@/components/auth-context"
