@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, LogOut, Menu, X } from "lucide-react"
 import { useAuth } from "@/components/auth-context"
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function Navbar() {
-  const { user, authenticated, logout } = useAuth()
+  const { user, authenticated, loading, logout } = useAuth()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -34,6 +34,7 @@ export function Navbar() {
     pathname?.startsWith("/borrower") ||
     pathname?.startsWith("/settings")
 
+  if (loading) return null
   if (shouldHideNavbar) return null
 
   return (
@@ -63,11 +64,11 @@ export function Navbar() {
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
           <Button className="bg-primary text-white rounded-full">Get the App</Button>
-          {authenticated && user ? (
+          {authenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="rounded-full border-primary text-primary hover:bg-emerald-500 hover:border-emerald-500">
-                  {user.first_name} {user.last_name}
+                  {user?.first_name} {user?.last_name}
                   <ChevronDown className="w-4 h-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -81,7 +82,7 @@ export function Navbar() {
                   <Link href="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive hover:text-white hover:bg-accent" variant="destructive">
                   <LogOut className="w-4 h-4 mr-2" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

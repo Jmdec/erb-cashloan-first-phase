@@ -3,9 +3,6 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-context"
-import BorrowerSettings from "../borrower/settings/page"
-import AdminSettings from "../admin/settings/page"
-import LenderSettings from "../lender/settings/page"
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -20,13 +17,13 @@ export default function SettingsPage() {
   const getRoleSettings = () => {
     switch (user?.role) {
       case "admin":
-        return <AdminSettings />
+        return router.push("/admin/settings")
       case "lender":
-        return <LenderSettings />
+        return router.push("/lender/settings")
       case "borrower":
-        return <BorrowerSettings />
+        return router.push("/borrower/settings")
       default:
-        return <BorrowerSettings />
+        return router.push("/borrower/settings")
     }
   }
 

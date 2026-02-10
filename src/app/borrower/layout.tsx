@@ -1,37 +1,18 @@
 "use client"
 
-import { useEffect, useState, ReactNode } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { ReactNode } from "react"
 import { Loader2 } from "lucide-react"
 import { useAuth } from "@/components/auth-context"
+import ProtectedLayout from "@/components/layout/protected-layout"
 
-interface BorrowerLayoutProps {
+interface BorrowwerLayoutProps {
   children: ReactNode
 }
 
-export default function Layout({ children }: BorrowerLayoutProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { user, authenticated } = useAuth()
-  const [isReady, setIsReady] = useState(false)
+export default function Layout({ children }: BorrowwerLayoutProps) {
+  const { loading } = useAuth()
 
-  useEffect(() => {
-    if (user === undefined) return // still loading user info
-
-    if (!user || !authenticated) {
-      router.push("/login") // not authenticated
-    } else if (user.role !== "borrower") {
-      router.push("/login") // authenticated but not borrower
-    } else {
-      // Authenticated borrower
-      if (pathname === "/borrower") {
-        router.replace("/borrower/dashboard") // redirect /borrower → /borrower/dashboard
-      }
-      setTimeout(() => setIsReady(true), 0) // allow layout to render
-    }
-  }, [user, authenticated, router, pathname])
-
-  if (!isReady) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -39,5 +20,5 @@ export default function Layout({ children }: BorrowerLayoutProps) {
     )
   }
 
-  return <>{children}</>
+  return <ProtectedLayout role="borrower">{children}</ProtectedLayout>
 }

@@ -3,9 +3,6 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-context"
-import BorrowerDashboard from "../borrower/dashboard/page"
-import AdminDashboard from "../admin/dashboard/page"
-import LenderDashboard from "../lender/dashboard/page"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -20,13 +17,13 @@ export default function DashboardPage() {
   const getRoleDashboard = () => {
     switch (user?.role) {
       case "admin":
-        return <AdminDashboard />
+        return router.push("/admin/dashboard")
       case "lender":
-        return <LenderDashboard />
+        return router.push("/lender/dashboard")
       case "borrower":
-        return <BorrowerDashboard />
+        return router.push("/borrower/dashboard")
       default:
-        return <BorrowerDashboard />
+        return router.push("/borrower/dashboard")
     }
   }
 

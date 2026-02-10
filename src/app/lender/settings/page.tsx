@@ -26,7 +26,7 @@ export default function LenderSettings() {
     lastName: "",
     email: "",
     phone: "",
-    profileImageUrl: ""
+    profileImageUrl: "",
   })
 
   // Fetch user profile on component mount
@@ -39,13 +39,13 @@ export default function LenderSettings() {
       setIsLoading(true)
       setErrorMessage("")
 
-      const response = await fetch('/api/settings', {
-        method: 'GET',
-        credentials: 'include',
+      const response = await fetch("/api/settings", {
+        method: "GET",
+        credentials: "include",
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch profile')
+        throw new Error("Failed to fetch profile")
       }
 
       const result = await response.json()
@@ -54,7 +54,7 @@ export default function LenderSettings() {
         lastName: result.data.last_name || "",
         email: result.data.email || "",
         phone: result.data.phone || "",
-        profileImageUrl: result.data.profile_url || ""
+        profileImageUrl: result.data.profile_url || "",
       }
 
       setProfileData(userData)
@@ -63,8 +63,8 @@ export default function LenderSettings() {
         setProfileImage(userData.profileImageUrl)
       }
     } catch (error: any) {
-      console.error('Error fetching profile:', error)
-      setErrorMessage(error.message || 'Failed to load profile data.')
+      console.error("Error fetching profile:", error)
+      setErrorMessage(error.message || "Failed to load profile data.")
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +72,7 @@ export default function LenderSettings() {
 
   const handleImageUpdate = (imageUrl: string) => {
     setProfileImage(imageUrl || null)
-    setProfileData(prev => ({ ...prev, profileImageUrl: imageUrl }))
+    setProfileData((prev) => ({ ...prev, profileImageUrl: imageUrl }))
   }
 
   const handleProfileUpdate = (data: ProfileData) => {
@@ -140,7 +140,7 @@ export default function LenderSettings() {
       <main className="max-w-8xl mx-8 md:mx-16 lg:mx-20 xl:mx-32">
         <div className="space-y-6">
           {/* Profile Picture Section */}
-          <Card className="gap-0 p-0 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="mt-6 gap-0 p-0 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="border-b border-slate-200 px-6 py-4 bg-primary/10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-50 rounded-lg">
@@ -153,12 +153,7 @@ export default function LenderSettings() {
               </div>
             </div>
             <div className="p-6">
-              <ProfilePicture
-                profileImage={profileImage}
-                onImageUpdate={handleImageUpdate}
-                onError={handleError}
-                onSuccess={handleSuccess}
-              />
+              <ProfilePicture profileImage={profileImage} onImageUpdate={handleImageUpdate} onError={handleError} onSuccess={handleSuccess} />
             </div>
           </Card>
 
@@ -176,17 +171,12 @@ export default function LenderSettings() {
               </div>
             </div>
             <div className="p-6">
-              <PersonalInformation
-                profileData={profileData}
-                onUpdate={handleProfileUpdate}
-                onError={handleError}
-                onSuccess={handleSuccess}
-              />
+              <PersonalInformation profileData={profileData} onUpdate={handleProfileUpdate} onError={handleError} onSuccess={handleSuccess} />
             </div>
           </Card>
 
           {/* Password Section */}
-          <Card className="gap-0 p-0 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="mb-8 gap-0 p-0 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="border-b border-slate-200 px-6 py-4 bg-primary/10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-violet-50 rounded-lg">

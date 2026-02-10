@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(data.token);
       setUserStorage(data.user);
       setUserState(data.user);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error) {
       throw error;
     }
