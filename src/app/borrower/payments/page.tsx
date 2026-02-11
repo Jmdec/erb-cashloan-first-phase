@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-context"
 import { PaymentModal } from "@/components/payment-modal"
-import { AlertCircle, CheckCircle2, Clock, CreditCard, DollarSign, Calendar } from "lucide-react"
+import { AlertCircle, CheckCircle2, Clock, CreditCard, DollarSign, Calendar, ChevronRight } from "lucide-react"
 
 interface Payment {
   id: number
@@ -59,8 +59,7 @@ export default function PaymentsPage() {
         fetch("/api/payments?type=overdue", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        // Fetch active loans
-        fetch("/api/loans", {
+        fetch("/api/loans?status=active", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ])
@@ -72,14 +71,20 @@ export default function PaymentsPage() {
       const upcoming = await upcomingRes.json()
       const overdue = await overdueRes.json()
 
-      // Directly extract the array from Laravel paginated response
       setUpcomingPayments(Array.isArray(upcoming.payments?.data) ? upcoming.payments.data : [])
       setOverduePayments(Array.isArray(overdue.payments?.data) ? overdue.payments.data : [])
 
-      // Active loans
       if (loansRes.ok) {
         const loansData = await loansRes.json()
-        const loans = Array.isArray(loansData.loans) ? loansData.loans : []
+
+        const loans = Array.isArray(loansData.loans?.data)
+          ? loansData.loans.data
+          : Array.isArray(loansData.loans)
+            ? loansData.loans
+            : Array.isArray(loansData.data)
+              ? loansData.data
+              : []
+
         const active = loans.filter((loan: Loan) => loan.status === "active")
         setActiveLoans(active)
       }
@@ -91,31 +96,30 @@ export default function PaymentsPage() {
   }
 
   useEffect(() => {
-    if (!authenticated && !authLoading) {
-      router.push("/")
-      return
-    }
+
 
     if (authenticated) {
       fetchPayments()
     }
   }, [authenticated, authLoading, router])
 
-  const handlePayClick = (payment: Payment) => {
+  const handlePayClick = (payment: Payment, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click when clicking pay button
     setSelectedPayment(payment)
     setPaymentModalOpen(true)
   }
 
-  const handleMakePaymentForLoan = (loan: Loan) => {
-    // Calculate monthly payment
+  const handleMakePaymentForLoan = (loan: Loan, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click when clicking pay button
+
     const monthlyPayment =
       loan.monthly_payment ||
       loan.next_payment_amount ||
       (parseFloat(loan.outstanding_balance || loan.principal_amount || loan.amount) / loan.term_months).toFixed(2)
 
-    // Create a payment object from the loan
+    // Create a proper payment object with all required fields
     const payment: Payment = {
-      id: loan.id,
+      id: 0, // Temporary ID since this is a new payment
       amount: monthlyPayment,
       due_date: loan.next_payment_date || new Date().toISOString(),
       status: "pending",
@@ -125,12 +129,18 @@ export default function PaymentsPage() {
       },
     }
 
+    console.log("Creating payment for loan:", payment)
     setSelectedPayment(payment)
     setPaymentModalOpen(true)
   }
 
+  const handleLoanCardClick = (loanId: number) => {
+    console.log("Navigating to loan:", loanId)
+    // Use window.location for reliable navigation
+    window.location.href = `/borrower/payments/${loanId}/history/`
+  }
+
   const handlePaymentSuccess = () => {
-    // Refresh the payments list
     setLoading(true)
     fetchPayments()
   }
@@ -141,16 +151,12 @@ export default function PaymentsPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-
-      {/* Main Content */}
       <div className="flex-1 lg:ml-0">
-        {/* Add padding for mobile header */}
         <div className="lg:hidden h-16" />
 
         <header className="border-b border-border bg-card">
           <div className="px-4 sm:px-6 py-4">
-            <h2 className="text-xl font-semibold">Payments</h2>
+            <h1 className="text-3xl font-bold text-primary">Payments</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage your loan payments</p>
           </div>
         </header>
@@ -166,12 +172,7 @@ export default function PaymentsPage() {
           )}
 
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full max-w-2xl grid-cols-4">
-              <TabsTrigger value="pending" className="gap-2">
-                <CreditCard className="h-4 w-4" />
-                <span className="hidden sm:inline">Pending Loans</span>
-                <span className="sm:hidden">Active</span>({activeLoans.length})
-              </TabsTrigger>
+            <TabsList className="grid w-full max-w-2xl grid-cols-3">
               <TabsTrigger value="active" className="gap-2">
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">Active Loans</span>
@@ -188,92 +189,6 @@ export default function PaymentsPage() {
                 <span className="sm:hidden">Over</span>({overduePayments.length})
               </TabsTrigger>
             </TabsList>
-
-            {/* Pending Loans Tab */}
-            <TabsContent value="pending" className="space-y-6 mt-6">
-              {activeLoans.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Pending Loans</h3>
-                  <p className="text-muted-foreground">You don&apos;t have any pending loans at the moment.</p>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {activeLoans.map((loan) => {
-                    const monthlyPayment =
-                      loan.monthly_payment ||
-                      loan.next_payment_amount ||
-                      (parseFloat(loan.outstanding_balance || loan.principal_amount || loan.amount) / loan.term_months).toFixed(2)
-
-                    return (
-                      <Card key={loan.id} className="p-4 sm:p-6 border-green-200 bg-green-50/30">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className="bg-green-100 text-green-800 border-green-300">pending</Badge>
-                              <span className="text-sm text-muted-foreground">Loan {loan.loan_number}</span>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                              <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Monthly Payment</p>
-                                  <p className="font-semibold text-lg">
-                                    ₱
-                                    {parseFloat(monthlyPayment).toLocaleString("en-US", {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Outstanding Balance</p>
-                                  <p className="font-medium">
-                                    ₱
-                                    {parseFloat(loan.outstanding_balance || loan.amount).toLocaleString("en-US", {
-                                      minimumFractionDigits: 2,
-                                    })}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Term</p>
-                                  <p className="font-medium">{loan.term_months} months</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {loan.next_payment_date && (
-                              <p className="text-sm text-muted-foreground">
-                                Next payment due:{" "}
-                                {new Date(loan.next_payment_date).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })}
-                              </p>
-                            )}
-                          </div>
-
-                          <Button className="w-full sm:w-auto bg-green-600 hover:bg-green-700" onClick={() => handleMakePaymentForLoan(loan)}>
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            Make Payment
-                          </Button>
-                        </div>
-                      </Card>
-                    )
-                  })}
-                </div>
-              )}
-            </TabsContent>
 
             {/* Active Loans Tab */}
             <TabsContent value="active" className="space-y-6 mt-6">
@@ -292,12 +207,17 @@ export default function PaymentsPage() {
                       (parseFloat(loan.outstanding_balance || loan.principal_amount || loan.amount) / loan.term_months).toFixed(2)
 
                     return (
-                      <Card key={loan.id} className="p-4 sm:p-6 border-green-200 bg-green-50/30">
+                      <Card
+                        key={loan.id}
+                        className="p-4 sm:p-6 border-green-200 bg-green-50/30 cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => handleLoanCardClick(loan.id)}
+                      >
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="flex-1 space-y-3">
                             <div className="flex items-center gap-2 flex-wrap">
                               <Badge className="bg-green-100 text-green-800 border-green-300">Active</Badge>
                               <span className="text-sm text-muted-foreground">Loan {loan.loan_number}</span>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto sm:ml-0" />
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
@@ -349,7 +269,10 @@ export default function PaymentsPage() {
                             )}
                           </div>
 
-                          <Button className="w-full sm:w-auto bg-green-600 hover:bg-green-700" onClick={() => handleMakePaymentForLoan(loan)}>
+                          <Button
+                            className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                            onClick={(e) => handleMakePaymentForLoan(loan, e)}
+                          >
                             <CreditCard className="h-4 w-4 mr-2" />
                             Make Payment
                           </Button>
@@ -388,7 +311,7 @@ export default function PaymentsPage() {
                             })}
                           </p>
                         </div>
-                        <Button className="w-full sm:w-auto" onClick={() => handlePayClick(payment)}>
+                        <Button className="w-full sm:w-auto" onClick={(e) => handlePayClick(payment, e)}>
                           Pay Now
                         </Button>
                       </div>
@@ -428,7 +351,7 @@ export default function PaymentsPage() {
                             })}
                           </p>
                         </div>
-                        <Button variant="destructive" className="w-full sm:w-auto" onClick={() => handlePayClick(payment)}>
+                        <Button variant="destructive" className="w-full sm:w-auto" onClick={(e) => handlePayClick(payment, e)}>
                           Pay Immediately
                         </Button>
                       </div>
